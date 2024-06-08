@@ -42,10 +42,18 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
+    /**
+ * 4-way 16-bit multiplexor:
+ * out = a if sel == 00
+ *       b if sel == 01
+ *       c if sel == 10
+ *       d if sel == 11
+ */
+
     Not16(in=x, out=not-x);
-    Mux4Way16(a=x, b[0..15]=false, c=not-x, d[0..15]=true, sel[0]=zx, sel[1]=nx, out=imm-x);
+    Mux4Way16(a=x, b=false, c=not-x, d=true, sel[0]=zx, sel[1]=nx, out=imm-x);
     Not16(in=y, out=not-y);
-    Mux4Way16(a=y, b[0..15]=false, c=not-y, d[0..15]=true, sel[0]=zy, sel[1]=ny, out=imm-y);
+    Mux4Way16(a=y, b=false, c=not-y, d=true, sel[0]=zy, sel[1]=ny, out=imm-y);
 
     And16(a=imm-x, b=imm-y, out=and-out);
     Add16(a=imm-x, b=imm-y, out=add-out);
@@ -53,16 +61,9 @@ CHIP ALU {
     Mux16(a=and-out, b=add-out, sel=f, out=imm-out);
     Not16(in=imm-out, out=not-imm-out);
 
-    Mux16(a=imm-out, b=not-imm-out, sel=no, out=out);
-    Mux16(a=imm-out, b=not-imm-out, sel=no, out=last-out);
+    Mux16(a=imm-out, b=not-imm-out, sel=no, out=out, out=last-out, out[15]=ng);
 
-    // Compute zr
-    //Or16Way(in=last-out, out=not-zr);
-    //Not(in=not-zr, out=zr);
-    Or8Way(in=x[0..7], out=low-zr);
-    Or8Way(in=x[8..15], out=high-zr);
-    And(a=high-zr, b=low-zr, out=zr);
-
-    // Compute NG
-    And(a=last-out[15], b=true, out=ng);
+    // Compute ZR
+    Or16Way(in=last-out, out=zr1);
+    Not(in=zr1, out=zr);
 }
